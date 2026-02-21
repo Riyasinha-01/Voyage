@@ -3,6 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
+import Head from "next/head";
+
+<Head>
+  <title>Voyage</title>
+</Head>
 
 export default function Home() {
   const router = useRouter();
