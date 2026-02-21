@@ -12,25 +12,11 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  // const handleGoogleSuccess = async (credentialResponse: any) => {
-  //   const id_token = credentialResponse.credential;
-  //   const res = await fetch("http://127.0.0.1:8000/api/auth/google/", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ id_token }),
-  //   });
-  //   const data = await res.json();
-  //   if (data.access) {
-  //     localStorage.setItem("token", data.access);
-  //     router.push("/chat");
-  //   } else {
-  //     alert("Login failed");
-  //   }
     const handleGoogleSuccess = async (credentialResponse: any) => {
     const id_token = credentialResponse.credential;
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/auth/google/", {
+      const res = await fetch("https://voyage-k82c.onrender.com/api/auth/google/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_token }),

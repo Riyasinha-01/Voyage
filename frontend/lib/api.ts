@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8000/api";
+const BASE_URL = "https://voyage-k82c.onrender.com/api";
 
 export const getToken = () => {
   if (typeof window === "undefined") return null;
@@ -35,7 +35,7 @@ export async function deleteChat(chatId: string) {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://127.0.0.1:8000/api/chat/delete/${chatId}/`,
+    `https://voyage-k82c.onrender.com/api/chat/delete/${chatId}/`,
     {
       method: "DELETE",
       headers: {

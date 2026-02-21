@@ -26,7 +26,7 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-const BASE_URL = "http://127.0.0.1:8000/api";
+const BASE_URL = "https://voyage-k82c.onrender.com/api";
 const getToken = () => (typeof window !== "undefined" ? localStorage.getItem("token") : null);
 
 async function fetchProfile(): Promise<UserProfile> {
@@ -42,7 +42,7 @@ async function fetchProfile(): Promise<UserProfile> {
 }
 
 async function deleteChat(chatId: string): Promise<void> {
-  await fetch(`http://127.0.0.1:8000/api/chat/delete/${chatId}/`, {
+  await fetch(`https://voyage-k82c.onrender.com/api/chat/delete/${chatId}/`, {
   method: "DELETE",
   headers: { Authorization: `Bearer ${getToken()}` },
 });

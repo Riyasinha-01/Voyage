@@ -34,7 +34,7 @@ export default function ChatPage() {
     }
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/profile/", {
+      const res = await fetch("https://voyage-k82c.onrender.com/api/profile/", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
