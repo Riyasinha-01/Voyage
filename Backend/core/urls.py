@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 def health_check(_):
-    return JsonResponse({"status": "ok"}, status=200)
+    return JsonResponse({"status": "Server is running"}, status=200)
 
 urlpatterns = [
     path("", health_check),
