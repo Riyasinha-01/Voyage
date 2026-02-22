@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { fetchChats } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
@@ -410,7 +411,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
         .modal-btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
 
-      {deleteTarget && (
+      {deleteTarget && typeof document !== "undefined" && createPortal(
         <div className="delete-overlay" onClick={() => setDeleteTarget(null)}>
           <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
             <div className="delete-modal-icon">
@@ -430,7 +431,8 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <aside className="sidebar">

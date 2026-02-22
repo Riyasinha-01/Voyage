@@ -38,10 +38,10 @@ const ICONS = [
   { icon:"🗺", label:"Maps",      delay:0.12 },
   { icon:"🏔", label:"Mountains", delay:0.24 },
   { icon:"🏖", label:"Beaches",   delay:0.36 },
-  { icon:"🕌", label:"Culture",   delay:0.48 },
-  { icon:"🚂", label:"Trains",    delay:0.60 },
-  { icon:"🌅", label:"Sunsets",   delay:0.72 },
-  { icon:"🧳", label:"Luggage",   delay:0.84 },
+  // { icon:"🕌", label:"Culture",   delay:0.48 },
+  // { icon:"🚂", label:"Trains",    delay:0.60 },
+  { icon:"🌅", label:"Sunsets",   delay:0.48 },
+  { icon:"🧳", label:"Luggage",   delay:0.60 },
 ];
 
 export default function Home() {
