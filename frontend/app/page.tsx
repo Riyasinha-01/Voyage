@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 
-// ── Deterministic particle data — no Math.random() ever called during render ──
 const PARTICLES = [
   { left:"8%",  w:2.4, h:2.4, dur:9.2,  del:0.4,  drift: 42  },
   { left:"16%", w:1.8, h:1.8, dur:11.5, del:2.1,  drift:-38  },
@@ -35,20 +34,19 @@ const LETTERS = [
 ];
 
 const ICONS = [
-  { icon:"✈", label:"Flights",   delay:0    },
-  { icon:"🗺", label:"Maps",     delay:0.12 },
-  { icon:"🏔", label:"Mountains",delay:0.24 },
-  { icon:"🏖", label:"Beaches",  delay:0.36 },
-  { icon:"🕌", label:"Culture",  delay:0.48 },
-  { icon:"🚂", label:"Trains",   delay:0.60 },
-  { icon:"🌅", label:"Sunsets",  delay:0.72 },
-  { icon:"🧳", label:"Luggage",  delay:0.84 },
+  { icon:"✈", label:"Flights",    delay:0    },
+  { icon:"🗺", label:"Maps",      delay:0.12 },
+  { icon:"🏔", label:"Mountains", delay:0.24 },
+  { icon:"🏖", label:"Beaches",   delay:0.36 },
+  { icon:"🕌", label:"Culture",   delay:0.48 },
+  { icon:"🚂", label:"Trains",    delay:0.60 },
+  { icon:"🌅", label:"Sunsets",   delay:0.72 },
+  { icon:"🧳", label:"Luggage",   delay:0.84 },
 ];
 
 export default function Home() {
   const router = useRouter();
 
-  // clientMounted = false on server → intro JSX never appears in SSR HTML
   const [clientMounted, setClientMounted] = useState(false);
   const [phase, setPhase] = useState<"title"|"travel"|"done">("title");
   const [destIndex, setDestIndex] = useState(0);
@@ -91,13 +89,37 @@ export default function Home() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,200;0,300;0,400;1,200;1,300;1,400&family=DM+Sans:wght@200;300;400;500&display=swap');
+
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-        html, body { height:100%; overflow:hidden; background:#0a0a08; color:#f0ede6; font-family:'DM Sans',sans-serif; }
+
+        /*
+          KEY FIX: html/body must allow scrolling on mobile.
+          We use min-height instead of height so content can grow.
+          overflow:hidden is removed — it was clipping the footer.
+        */
+        html {
+          background: #0a0a08;
+          color: #f0ede6;
+          font-family: 'DM Sans', sans-serif;
+          /* Prevent horizontal scroll */
+          overflow-x: hidden;
+        }
+        body {
+          background: #0a0a08;
+          min-height: 100dvh;
+          overflow-x: hidden;
+        }
 
         /* ── INTRO ── */
         .v-intro {
-          position:fixed; inset:0; z-index:100; background:#0a0a08;
-          display:flex; flex-direction:column; align-items:center; justify-content:center;
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          background: #0a0a08;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
         }
 
         .v-particles { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
@@ -115,7 +137,7 @@ export default function Home() {
         .v-letters { display:flex; gap:4px; align-items:baseline; position:relative; z-index:2; }
         .v-letter {
           font-family:'Cormorant Garamond',serif;
-          font-size:clamp(64px,12vw,140px); font-weight:200;
+          font-size:clamp(56px,12vw,140px); font-weight:200;
           color:#f0ede6; letter-spacing:0.04em; line-height:1;
           opacity:0; transform:translateY(44px) rotateX(55deg);
           transition:opacity 0.55s ease, transform 0.55s cubic-bezier(0.16,1,0.3,1);
@@ -135,7 +157,7 @@ export default function Home() {
 
         .v-icons {
           display:flex; gap:26px; align-items:center;
-          position:absolute; bottom:76px; left:50%; transform:translateX(-50%);
+          position:absolute; bottom:60px; left:50%; transform:translateX(-50%);
           z-index:2;
         }
         .v-icon {
@@ -156,14 +178,23 @@ export default function Home() {
         .v-bar.run { width:100%; }
 
         /* ── MAIN PAGE ── */
+        /*
+          KEY FIX: Use min-height + flex column instead of height:100vh.
+          This allows the page to SCROLL on small screens instead of clipping.
+        */
         .v-home {
-          height:100vh; display:flex; flex-direction:column;
-          position:relative; overflow:hidden;
-          opacity:0; transition:opacity 1s ease 0.15s;
+          min-height: 100dvh;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          /* No overflow:hidden here — let content be visible */
+          opacity: 0;
+          transition: opacity 1s ease 0.15s;
         }
         .v-home.show { opacity:1; }
 
-        .v-bg { position:absolute; inset:0; pointer-events:none; z-index:0; }
+        /* Background decorations */
+        .v-bg { position:fixed; inset:0; pointer-events:none; z-index:0; }
         .v-orb1 {
           position:absolute; width:500px; height:500px; border-radius:50%;
           background:radial-gradient(circle,rgba(180,150,100,0.13) 0%,transparent 70%);
@@ -176,94 +207,153 @@ export default function Home() {
         }
         .v-grid {
           position:absolute; inset:0;
-          background-image:linear-gradient(rgba(240,237,230,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(240,237,230,0.02) 1px,transparent 1px);
+          background-image:linear-gradient(rgba(240,237,230,0.02) 1px,transparent 1px),
+                            linear-gradient(90deg,rgba(240,237,230,0.02) 1px,transparent 1px);
           background-size:80px 80px;
         }
         @keyframes vDrift1 { from{transform:translate(0,0) scale(1)} to{transform:translate(30px,40px) scale(1.1)} }
         @keyframes vDrift2 { from{transform:translate(0,0) scale(1)} to{transform:translate(-20px,30px) scale(1.05)} }
 
+        /* Nav */
         .v-nav {
-          position:relative; z-index:10; display:flex; justify-content:space-between; align-items:center;
-          padding:24px 56px; flex-shrink:0; opacity:0; animation:vFadeDown 0.7s ease forwards 0.3s;
+          position:relative; z-index:10;
+          display:flex; justify-content:space-between; align-items:center;
+          padding:20px 24px;
+          flex-shrink:0;
+          opacity:0; animation:vFadeDown 0.7s ease forwards 0.3s;
         }
+        @media (min-width:768px) { .v-nav { padding:24px 56px; } }
+
         .v-logo { font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:400; letter-spacing:0.08em; color:#f0ede6; }
         .v-logo span { color:#c9a96e; }
         .v-navlinks { display:flex; gap:32px; list-style:none; }
         .v-navlinks a { font-size:12px; font-weight:300; letter-spacing:0.06em; color:rgba(240,237,230,0.45); text-decoration:none; text-transform:uppercase; transition:color 0.3s; }
         .v-navlinks a:hover { color:#f0ede6; }
 
+        /* Hero */
         .v-hero {
-          position:relative; z-index:10; flex:1;
+          position:relative; z-index:10;
+          flex:1;
           display:flex; flex-direction:column; justify-content:center; align-items:center;
-          text-align:center; padding:0 40px;
+          text-align:center;
+          padding:32px 24px 40px;
         }
+        @media (min-width:768px) {
+          .v-hero { padding:0 40px 40px; }
+        }
+
         .v-eyebrow {
           font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#c9a96e;
           margin-bottom:16px; opacity:0; animation:vFadeUp 0.8s ease forwards 0.5s;
           display:flex; align-items:center; gap:12px;
         }
-        .v-eyebrow::before,.v-eyebrow::after { content:''; display:block; width:36px; height:1px; background:#c9a96e; opacity:0.5; }
+        .v-eyebrow::before,.v-eyebrow::after {
+          content:''; display:block; width:28px; height:1px; background:#c9a96e; opacity:0.5;
+        }
+        @media (min-width:768px) {
+          .v-eyebrow::before,.v-eyebrow::after { width:36px; }
+        }
+
         .v-title {
-          font-family:'Cormorant Garamond',serif; font-size:clamp(48px,7vw,96px); font-weight:300;
+          font-family:'Cormorant Garamond',serif;
+          font-size:clamp(42px,9vw,96px); font-weight:300;
           line-height:0.95; letter-spacing:-0.02em; color:#f0ede6;
           margin-bottom:10px; opacity:0; animation:vFadeUp 0.9s ease forwards 0.65s;
         }
         .v-title em { font-style:italic; color:#c9a96e; }
+
         .v-dest {
-          font-family:'Cormorant Garamond',serif; font-size:clamp(48px,7vw,96px); font-weight:300;
+          font-family:'Cormorant Garamond',serif;
+          font-size:clamp(42px,9vw,96px); font-weight:300;
           line-height:0.95; letter-spacing:-0.02em; color:rgba(240,237,230,0.15);
-          margin-bottom:24px; height:clamp(48px,7vw,96px); overflow:hidden;
+          margin-bottom:20px;
+          height:clamp(42px,9vw,96px); overflow:hidden;
           opacity:0; animation:vFadeUp 0.9s ease forwards 0.75s;
         }
         .v-dest-word { display:block; transition:transform 0.6s cubic-bezier(0.76,0,0.24,1); }
+
         .v-sub {
-          font-size:14px; font-weight:300; color:rgba(240,237,230,0.4); max-width:380px;
-          line-height:1.65; margin-bottom:28px; opacity:0; animation:vFadeUp 0.9s ease forwards 0.9s;
+          font-size:14px; font-weight:300; color:rgba(240,237,230,0.4);
+          max-width:340px; line-height:1.7;
+          margin-bottom:28px;
+          opacity:0; animation:vFadeUp 0.9s ease forwards 0.9s;
         }
-        .v-cta { display:flex; gap:12px; align-items:center; opacity:0; animation:vFadeUp 0.9s ease forwards 1.05s; }
+        @media (min-width:768px) { .v-sub { max-width:380px; } }
+
+        .v-cta {
+          display:flex; gap:12px; align-items:center;
+          flex-wrap:wrap; justify-content:center;
+          opacity:0; animation:vFadeUp 0.9s ease forwards 1.05s;
+        }
+
         .v-btn-p {
-          padding:13px 32px; background:#c9a96e; color:#0a0a08;
+          padding:14px 32px; background:#c9a96e; color:#0a0a08;
           font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
           letter-spacing:0.07em; text-transform:uppercase; border:none; cursor:pointer;
           transition:all 0.3s ease; position:relative; overflow:hidden;
+          /* Comfortable tap target */
+          min-height:48px;
         }
         .v-btn-p::after { content:''; position:absolute; inset:0; background:#f0ede6; transform:translateX(-100%); transition:transform 0.3s ease; }
         .v-btn-p:hover::after { transform:translateX(0); }
         .v-btn-p span { position:relative; z-index:1; }
+
         .v-btn-g {
-          padding:13px 24px; background:transparent; color:rgba(240,237,230,0.45);
+          padding:14px 24px; background:transparent; color:rgba(240,237,230,0.45);
           font-family:'DM Sans',sans-serif; font-size:12px; font-weight:300;
           letter-spacing:0.06em; text-transform:uppercase;
           border:1px solid rgba(240,237,230,0.12); cursor:pointer; transition:all 0.3s ease;
+          min-height:48px;
         }
         .v-btn-g:hover { border-color:rgba(240,237,230,0.28); color:#f0ede6; }
 
+        /* Features — the "footer" section */
+        /*
+          KEY FIX: No animation delay stacking that causes late appearance,
+          and grid stacks to 1 column on mobile.
+          Also: position:relative + z-index so it renders above the fixed bg.
+        */
         .v-features {
-          position:relative; z-index:10; display:grid; grid-template-columns:repeat(3,1fr);
-          gap:1px; background:rgba(240,237,230,0.06); border-top:1px solid rgba(240,237,230,0.06);
-          flex-shrink:0; opacity:0; animation:vFadeUp 0.9s ease forwards 1.2s;
+          position:relative; z-index:10;
+          display:grid; grid-template-columns:1fr;
+          gap:1px; background:rgba(240,237,230,0.06);
+          border-top:1px solid rgba(240,237,230,0.06);
+          flex-shrink:0;
+          opacity:0; animation:vFadeUp 0.9s ease forwards 1.2s;
+          /* Ensure it never gets cut off */
+          width:100%;
         }
-        .v-feat { background:#0a0a08; padding:24px 36px; transition:background 0.3s; }
+        @media (min-width:640px) {
+          .v-features { grid-template-columns:repeat(3,1fr); }
+        }
+
+        .v-feat {
+          background:#0a0a08;
+          padding:20px 24px;
+          transition:background 0.3s;
+        }
+        @media (min-width:768px) {
+          .v-feat { padding:24px 36px; }
+        }
         .v-feat:hover { background:#111110; }
-        .v-feat-n { font-family:'Cormorant Garamond',serif; font-size:10px; color:#c9a96e; letter-spacing:0.15em; margin-bottom:10px; opacity:0.7; }
-        .v-feat-t { font-size:14px; font-weight:400; color:#f0ede6; margin-bottom:6px; letter-spacing:0.01em; }
+        .v-feat-n { font-family:'Cormorant Garamond',serif; font-size:10px; color:#c9a96e; letter-spacing:0.15em; margin-bottom:8px; opacity:0.7; }
+        .v-feat-t { font-size:14px; font-weight:400; color:#f0ede6; margin-bottom:5px; letter-spacing:0.01em; }
         .v-feat-d { font-size:12px; font-weight:300; color:rgba(240,237,230,0.32); line-height:1.65; }
+
+        /* Nav links hide on mobile */
+        @media (max-width:767px) {
+          .v-navlinks { display:none; }
+          /* Intro icons: fewer columns, wrapped */
+          .v-icons { gap:10px; bottom:44px; flex-wrap:wrap; justify-content:center; max-width:90vw; }
+          .v-icon-emoji { font-size:18px; }
+          .v-icon-label { display:none; }
+        }
 
         @keyframes vFadeUp   { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
         @keyframes vFadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
-
-        @media (max-width:768px) {
-          .v-nav { padding:18px 20px; }
-          .v-navlinks { display:none; }
-          .v-features { grid-template-columns:1fr; }
-          .v-feat { padding:18px 20px; }
-          .v-sub { max-width:300px; }
-          .v-icons { gap:12px; bottom:52px; }
-          .v-icon-emoji { font-size:20px; }
-        }
       `}</style>
 
-      {/* ── INTRO — clientMounted guard means this is NEVER in SSR HTML ── */}
+      {/* INTRO */}
       {clientMounted && phase !== "done" && (
         <div className="v-intro">
           <div className="v-particles">
@@ -308,7 +398,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── MAIN PAGE ── */}
+      {/* MAIN PAGE */}
       <div className={`v-home ${phase === "done" ? "show" : ""}`}>
         <div className="v-bg">
           <div className="v-grid" />
