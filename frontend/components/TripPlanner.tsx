@@ -122,7 +122,7 @@ export default function TripPlannerForm({ onSubmit }: TripPlannerFormProps) {
         .tpf-scroll {
           padding: 18px 20px 12px;
           overflow-y: auto;
-          max-height: 320px;
+          max-height: 220px;
           display: flex;
           flex-direction: column;
           gap: 16px;
@@ -396,7 +396,7 @@ export default function TripPlannerForm({ onSubmit }: TripPlannerFormProps) {
           background: rgba(240,237,230,0.06);
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 767px) {
           .tpf-wrap { padding: 0 16px; }
           .tpf-row { grid-template-columns: 1fr; }
         }

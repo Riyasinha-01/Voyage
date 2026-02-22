@@ -18,12 +18,7 @@ interface UserProfile {
 }
 
 function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
 const BASE_URL = "https://voyage-k82c.onrender.com/api";
@@ -34,58 +29,35 @@ async function fetchProfile(): Promise<UserProfile> {
     headers: { Authorization: `Bearer ${getToken()}` },
   });
   const data = await res.json();
-  return {
-    name: data.name || "Traveller",
-    email: data.email || "",
-    avatar: data.image || undefined,
-  };
+  return { name: data.name || "Traveller", email: data.email || "", avatar: data.image || undefined };
 }
 
 async function deleteChat(chatId: string): Promise<void> {
   await fetch(`https://voyage-k82c.onrender.com/api/chat/delete/${chatId}/`, {
-  method: "DELETE",
-  headers: { Authorization: `Bearer ${getToken()}` },
-});
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
 }
 
 export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDeleteChat }: SidebarProps) {
   const [chats, setChats] = useState<any[]>([]);
-  const [user, setUser] = useState<UserProfile>({
-    name: "Traveller",
-    email: "",
-    avatar: undefined,
-  });
+  const [user, setUser] = useState<UserProfile>({ name: "Traveller", email: "", avatar: undefined });
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    loadChats();
-    loadProfile();
-  }, []);
+  useEffect(() => { loadChats(); loadProfile(); }, []);
 
   const loadChats = async () => {
-    try {
-      const data = await fetchChats();
-      setChats(Array.isArray(data) ? data : []);
-    } catch {
-      setChats([]);
-    }
+    try { const data = await fetchChats(); setChats(Array.isArray(data) ? data : []); }
+    catch { setChats([]); }
   };
 
   const loadProfile = async () => {
-    try {
-      const profile = await fetchProfile();
-      setUser(profile);
-    } catch {
-      // keep defaults
-    }
+    try { setUser(await fetchProfile()); } catch { }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/");
-  };
+  const handleLogout = () => { localStorage.removeItem("token"); router.push("/"); };
 
   const handleDeleteClick = (e: React.MouseEvent, id: string, title: string) => {
     e.stopPropagation();
@@ -98,16 +70,9 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
     try {
       await deleteChat(deleteTarget.id);
       setChats((prev) => prev.filter((c) => (c.chat_id || c.id) !== deleteTarget.id));
-    } catch {
-      // handle error silently or show toast
-    } finally {
-      setIsDeleting(false);
-      setDeleteTarget(null);
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteTarget(null);
+      onDeleteChat(deleteTarget.id);
+    } catch { }
+    finally { setIsDeleting(false); setDeleteTarget(null); }
   };
 
   return (
@@ -118,15 +83,16 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
         .sidebar {
           width: 280px;
           min-width: 280px;
-          height: 100vh;
+          height: 100dvh;
           background: #1a1916;
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          /* Prevent content from ever going off-screen */
         }
 
         .sidebar-header {
-          padding: 28px 24px 20px;
+          padding: 24px 20px 18px;
           border-bottom: 1px solid rgba(240,237,230,0.07);
           flex-shrink: 0;
         }
@@ -137,8 +103,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           font-weight: 400;
           color: #f0ede6;
           letter-spacing: 0.06em;
-          margin-bottom: 20px;
-          white-space: nowrap;
+          margin-bottom: 18px;
         }
 
         .sidebar-logo span { color: #c9a96e; }
@@ -159,7 +124,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           text-transform: uppercase;
           cursor: pointer;
           transition: all 0.2s;
-          white-space: nowrap;
+          border-radius: 4px;
         }
 
         .new-chat-btn:hover {
@@ -168,26 +133,26 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
         }
 
         .sidebar-section-label {
-          padding: 20px 24px 8px;
+          padding: 16px 20px 6px;
           font-size: 10px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
           color: rgba(240,237,230,0.2);
-          white-space: nowrap;
           flex-shrink: 0;
-          min-height: 38px;
+          font-family: 'DM Sans', sans-serif;
         }
 
+        /* Chat list scrolls in its own box */
         .chat-list {
           flex: 1;
           overflow-y: auto;
-          padding: 4px 12px 12px;
+          padding: 4px 10px 8px;
           scrollbar-width: thin;
           scrollbar-color: rgba(240,237,230,0.08) transparent;
+          min-height: 0; /* important: allows flex children to shrink */
         }
 
         .chat-list::-webkit-scrollbar { width: 3px; }
-        .chat-list::-webkit-scrollbar-track { background: transparent; }
         .chat-list::-webkit-scrollbar-thumb { background: rgba(240,237,230,0.1); }
 
         .chat-item {
@@ -198,18 +163,13 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           cursor: pointer;
           transition: background 0.2s;
           margin-bottom: 2px;
-          overflow: hidden;
-          position: relative;
           gap: 8px;
         }
 
         .chat-item:hover { background: rgba(240,237,230,0.07); }
         .chat-item.active { background: rgba(240,237,230,0.1); }
 
-        .chat-item-main {
-          flex: 1;
-          min-width: 0;
-        }
+        .chat-item-main { flex: 1; min-width: 0; }
 
         .chat-item-icon {
           font-size: 10px;
@@ -234,58 +194,59 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 22px;
-          height: 22px;
+          width: 28px;
+          height: 28px;
           background: none;
           border: none;
           color: rgba(240,237,230,0.0);
           cursor: pointer;
-          padding: 0;
           border-radius: 4px;
           transition: color 0.2s, background 0.2s;
         }
 
-        .chat-item:hover .chat-delete-btn {
-          color: rgba(240,237,230,0.25);
+        /* Always show delete on mobile (touch users can't hover) */
+        @media (max-width: 767px) {
+          .chat-delete-btn { color: rgba(240,237,230,0.2); }
         }
 
-        .chat-delete-btn:hover {
-          color: #e07070 !important;
-          background: rgba(224,112,112,0.1) !important;
-        }
+        .chat-item:hover .chat-delete-btn { color: rgba(240,237,230,0.25); }
+        .chat-delete-btn:hover { color: #e07070 !important; background: rgba(224,112,112,0.1) !important; }
 
         .chat-empty {
-          padding: 20px 12px;
+          padding: 16px 10px;
           font-size: 13px;
           color: rgba(240,237,230,0.18);
           line-height: 1.65;
+          font-family: 'DM Sans', sans-serif;
+          font-weight: 300;
           font-style: italic;
           font-family: 'Cormorant Garamond', serif;
         }
 
-        /* Footer */
+        /* Footer — always visible, never pushed off screen */
         .sidebar-footer {
           border-top: 1px solid rgba(240,237,230,0.07);
           flex-shrink: 0;
+          background: #1a1916;
         }
 
         .profile-card {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 16px 20px 12px;
+          padding: 14px 20px 10px;
         }
 
         .profile-avatar-wrap {
           position: relative;
           flex-shrink: 0;
-          width: 38px;
-          height: 38px;
+          width: 36px;
+          height: 36px;
         }
 
         .profile-avatar {
-          width: 38px;
-          height: 38px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           overflow: hidden;
           background: linear-gradient(135deg, #c9a96e 0%, #8b6f3e 100%);
@@ -295,19 +256,13 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           border: 1.5px solid rgba(201,169,110,0.25);
         }
 
-        .profile-avatar img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         .avatar-initials {
           font-family: 'DM Sans', sans-serif;
           font-size: 13px;
           font-weight: 500;
           color: #1a1916;
-          letter-spacing: 0.04em;
-          line-height: 1;
           user-select: none;
         }
 
@@ -322,10 +277,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           border: 2px solid #1a1916;
         }
 
-        .profile-info {
-          flex: 1;
-          min-width: 0;
-        }
+        .profile-info { flex: 1; min-width: 0; }
 
         .profile-name {
           font-family: 'DM Sans', sans-serif;
@@ -336,7 +288,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           overflow: hidden;
           text-overflow: ellipsis;
           line-height: 1.3;
-          margin-bottom: 3px;
+          margin-bottom: 2px;
         }
 
         .profile-email {
@@ -347,17 +299,12 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          letter-spacing: 0.01em;
         }
 
-        .footer-divider {
-          height: 1px;
-          margin: 0 20px;
-          background: rgba(240,237,230,0.05);
-        }
+        .footer-divider { height: 1px; margin: 0 20px; background: rgba(240,237,230,0.05); }
 
         .signout-row {
-          padding: 11px 20px 16px;
+          padding: 10px 20px 14px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -369,20 +316,19 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           gap: 7px;
           background: none;
           border: none;
-          color: rgba(240,237,230,0.22);
+          color: rgba(240,237,230,0.28);
           font-family: 'DM Sans', sans-serif;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 300;
           cursor: pointer;
           transition: color 0.2s;
           letter-spacing: 0.04em;
-          padding: 0;
-          white-space: nowrap;
+          padding: 6px 0;
         }
 
-        .logout-btn:hover { color: rgba(240,237,230,0.55); }
-        .logout-btn:hover svg { transform: translateX(2px); }
+        .logout-btn:hover { color: rgba(240,237,230,0.6); }
         .logout-btn svg { transition: transform 0.2s; }
+        .logout-btn:hover svg { transform: translateX(2px); }
 
         .app-version {
           font-family: 'DM Sans', sans-serif;
@@ -393,7 +339,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           text-transform: uppercase;
         }
 
-        /* Delete Confirmation Modal */
+        /* Delete modal */
         .delete-overlay {
           position: fixed;
           inset: 0;
@@ -403,129 +349,74 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           align-items: center;
           justify-content: center;
           z-index: 1000;
+          padding: 20px;
           animation: overlayIn 0.18s ease;
         }
 
-        @keyframes overlayIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
+        @keyframes overlayIn { from{opacity:0} to{opacity:1} }
 
         .delete-modal {
           background: #211f1c;
           border: 1px solid rgba(240,237,230,0.1);
-          width: 320px;
-          padding: 28px 28px 24px;
-          position: relative;
+          width: 100%;
+          max-width: 320px;
+          padding: 26px 24px 22px;
+          border-radius: 8px;
           animation: modalIn 0.22s cubic-bezier(0.34,1.3,0.64,1);
         }
 
-        @keyframes modalIn {
-          from { opacity: 0; transform: scale(0.94) translateY(8px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
+        @keyframes modalIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
 
         .delete-modal-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: rgba(224,112,112,0.1);
-          border: 1px solid rgba(224,112,112,0.2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 16px;
-          color: #e07070;
+          width: 36px; height: 36px; border-radius: 50%;
+          background: rgba(224,112,112,0.1); border: 1px solid rgba(224,112,112,0.2);
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 14px; color: #e07070;
         }
 
         .delete-modal-title {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 18px;
-          font-weight: 400;
-          color: #f0ede6;
-          letter-spacing: 0.02em;
-          margin-bottom: 8px;
+          font-family: 'Cormorant Garamond', serif; font-size: 18px;
+          font-weight: 400; color: #f0ede6; margin-bottom: 8px;
         }
 
         .delete-modal-desc {
-          font-family: 'DM Sans', sans-serif;
-          font-size: 12.5px;
-          font-weight: 300;
-          color: rgba(240,237,230,0.38);
-          line-height: 1.6;
-          margin-bottom: 24px;
+          font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 300;
+          color: rgba(240,237,230,0.38); line-height: 1.6; margin-bottom: 22px;
         }
 
-        .delete-modal-desc strong {
-          color: rgba(240,237,230,0.62);
-          font-weight: 400;
-        }
+        .delete-modal-desc strong { color: rgba(240,237,230,0.62); font-weight: 400; }
 
-        .delete-modal-actions {
-          display: flex;
-          gap: 10px;
-        }
+        .delete-modal-actions { display: flex; gap: 10px; }
 
         .modal-btn-cancel {
-          flex: 1;
-          padding: 10px;
-          background: none;
+          flex: 1; padding: 10px; background: none;
           border: 1px solid rgba(240,237,230,0.12);
-          color: rgba(240,237,230,0.45);
-          font-family: 'DM Sans', sans-serif;
-          font-size: 12px;
-          font-weight: 400;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: all 0.2s;
+          color: rgba(240,237,230,0.45); font-family: 'DM Sans', sans-serif;
+          font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+          cursor: pointer; border-radius: 4px; transition: all 0.2s;
         }
 
-        .modal-btn-cancel:hover {
-          background: rgba(240,237,230,0.05);
-          color: rgba(240,237,230,0.7);
-          border-color: rgba(240,237,230,0.22);
-        }
+        .modal-btn-cancel:hover { background: rgba(240,237,230,0.05); color: rgba(240,237,230,0.7); }
 
         .modal-btn-delete {
-          flex: 1;
-          padding: 10px;
-          background: rgba(224,112,112,0.12);
-          border: 1px solid rgba(224,112,112,0.25);
-          color: #e07070;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 12px;
-          font-weight: 400;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: all 0.2s;
+          flex: 1; padding: 10px;
+          background: rgba(224,112,112,0.12); border: 1px solid rgba(224,112,112,0.25);
+          color: #e07070; font-family: 'DM Sans', sans-serif;
+          font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+          cursor: pointer; border-radius: 4px; transition: all 0.2s;
         }
 
-        .modal-btn-delete:hover:not(:disabled) {
-          background: rgba(224,112,112,0.2);
-          border-color: rgba(224,112,112,0.4);
-        }
-
-        .modal-btn-delete:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
+        .modal-btn-delete:hover:not(:disabled) { background: rgba(224,112,112,0.2); }
+        .modal-btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
 
-      {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <div className="delete-overlay" onClick={handleCancelDelete}>
+        <div className="delete-overlay" onClick={() => setDeleteTarget(null)}>
           <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
             <div className="delete-modal-icon">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M2 4h12M5 4V2.5a.5.5 0 01.5-.5h5a.5.5 0 01.5.5V4M6 7v5M10 7v5M3 4l.8 8.5A1 1 0 004.8 13.5h6.4a1 1 0 001-.95L13 4"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M2 4h12M5 4V2.5a.5.5 0 01.5-.5h5a.5.5 0 01.5.5V4M6 7v5M10 7v5M3 4l.8 8.5A1 1 0 004.8 13.5h6.4a1 1 0 001-.95L13 4"
+                  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
             <div className="delete-modal-title">Remove this journey?</div>
@@ -533,14 +424,8 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
               <strong>"{deleteTarget.title}"</strong> will be permanently deleted and cannot be recovered.
             </div>
             <div className="delete-modal-actions">
-              <button className="modal-btn-cancel" onClick={handleCancelDelete}>
-                Cancel
-              </button>
-              <button
-                className="modal-btn-delete"
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-              >
+              <button className="modal-btn-cancel" onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button className="modal-btn-delete" onClick={handleConfirmDelete} disabled={isDeleting}>
                 {isDeleting ? "Removing…" : "Delete"}
               </button>
             </div>
@@ -559,15 +444,13 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           </button>
         </div>
 
-        <div className="sidebar-section-label">
-          {chats.length > 0 ? "Recent Trips" : ""}
-        </div>
+        {chats.length > 0 && (
+          <div className="sidebar-section-label">Recent Trips</div>
+        )}
 
         <div className="chat-list">
           {chats.length === 0 ? (
-            <div className="chat-empty">
-              Your trips will appear here once you start planning.
-            </div>
+            <div className="chat-empty">Your trips will appear here once you start planning.</div>
           ) : (
             chats.map((chat: any) => {
               const id = chat.chat_id || chat.id;
@@ -588,13 +471,8 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
                     onClick={(e) => handleDeleteClick(e, id, title)}
                   >
                     <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                      <path
-                        d="M1.5 3.5h11M4.5 3.5V2a.5.5 0 01.5-.5h4a.5.5 0 01.5.5v1.5M5.5 6.5v4M8.5 6.5v4M2.5 3.5l.7 7.8a.75.75 0 00.75.7h6.1a.75.75 0 00.75-.7l.7-7.8"
-                        stroke="currentColor"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                      <path d="M1.5 3.5h11M4.5 3.5V2a.5.5 0 01.5-.5h4a.5.5 0 01.5.5v1.5M5.5 6.5v4M8.5 6.5v4M2.5 3.5l.7 7.8a.75.75 0 00.75.7h6.1a.75.75 0 00.75-.7l.7-7.8"
+                        stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                 </div>
@@ -603,15 +481,15 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           )}
         </div>
 
+        {/* Footer always pinned at bottom */}
         <div className="sidebar-footer">
           <div className="profile-card">
             <div className="profile-avatar-wrap">
               <div className="profile-avatar">
-                {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} />
-                ) : (
-                  <span className="avatar-initials">{getInitials(user.name)}</span>
-                )}
+                {user.avatar
+                  ? <img src={user.avatar} alt={user.name} />
+                  : <span className="avatar-initials">{getInitials(user.name)}</span>
+                }
               </div>
               <span className="online-dot" />
             </div>
@@ -626,13 +504,8 @@ export default function Sidebar({ activeChatId, onSelectChat, onNewChat, onDelet
           <div className="signout-row">
             <button className="logout-btn" onClick={handleLogout}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M12 7H5"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3M9 10l3-3-3-3M12 7H5"
+                  stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Sign out
             </button>

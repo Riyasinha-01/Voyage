@@ -24,7 +24,7 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 160) + "px";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
   };
 
   const handleFormSubmit = (prompt: string) => {
@@ -38,26 +38,39 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap');
 
         .mi-area {
-          padding: 12px 0 22px;
-          background: #111210 !important;
+          background: #111210;
           border-top: 1px solid rgba(240,237,230,0.07);
           flex-shrink: 0;
           width: 100%;
+          /* Let it breathe on desktop, compact on mobile */
+          padding: 8px 0 14px;
+        }
+
+        @media (min-width: 768px) {
+          .mi-area { padding: 12px 0 22px; }
         }
 
         .mi-inner {
           max-width: 700px;
           margin: 0 auto;
-          padding: 0 32px;
+          padding: 0 16px;
           background: #111210;
+        }
+
+        @media (min-width: 768px) {
+          .mi-inner { padding: 0 32px; }
         }
 
         .mi-or {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 8px 0;
+          padding: 5px 0;
           background: #111210;
+        }
+
+        @media (min-width: 768px) {
+          .mi-or { padding: 8px 0; }
         }
 
         .mi-or-line {
@@ -73,6 +86,7 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
           color: rgba(240,237,230,0.18);
           letter-spacing: 0.1em;
           text-transform: uppercase;
+          white-space: nowrap;
         }
 
         .mi-box {
@@ -91,7 +105,7 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
 
         .mi-textarea {
           width: 100%;
-          padding: 14px 52px 14px 18px;
+          padding: 11px 48px 11px 14px;
           background: transparent;
           border: none;
           outline: none;
@@ -100,20 +114,30 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
           font-weight: 300;
           color: rgba(240,237,230,0.82);
           resize: none;
-          line-height: 1.6;
-          max-height: 160px;
+          line-height: 1.5;
+          max-height: 120px;
           overflow-y: auto;
           scrollbar-width: thin;
           scrollbar-color: rgba(240,237,230,0.08) transparent;
           display: block;
+          /* Prevent iOS zoom on focus */
+          font-size: 16px;
+        }
+
+        @media (min-width: 768px) {
+          .mi-textarea {
+            padding: 14px 52px 14px 18px;
+            font-size: 14px;
+            max-height: 160px;
+          }
         }
 
         .mi-textarea::placeholder { color: rgba(240,237,230,0.2); }
 
         .mi-send {
           position: absolute;
-          right: 11px;
-          bottom: 10px;
+          right: 9px;
+          bottom: 8px;
           width: 32px;
           height: 32px;
           background: rgba(240,237,230,0.06);
@@ -127,13 +151,12 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
           flex-shrink: 0;
         }
 
-        .mi-send:hover:not(:disabled) {
+        .mi-send:hover:not(:disabled),
+        .mi-send:active:not(:disabled) {
           background: #c9a96e;
           border-color: #c9a96e;
-          transform: scale(1.04);
         }
 
-        .mi-send:active:not(:disabled) { transform: scale(0.96); }
         .mi-send:disabled { opacity: 0.25; cursor: not-allowed; }
 
         .mi-send-icon {
@@ -146,7 +169,8 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
           stroke-linejoin: round;
         }
 
-        .mi-send:hover:not(:disabled) .mi-send-icon { stroke: #0a0a08; }
+        .mi-send:hover:not(:disabled) .mi-send-icon,
+        .mi-send:active:not(:disabled) .mi-send-icon { stroke: #0a0a08; }
 
         .mi-spinner {
           width: 13px;
@@ -164,7 +188,7 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
           align-items: center;
           justify-content: center;
           gap: 12px;
-          margin-top: 8px;
+          margin-top: 6px;
           background: #111210;
         }
 
@@ -176,6 +200,11 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
           font-weight: 300;
         }
 
+        /* Hide keyboard hints on mobile to save space */
+        @media (max-width: 767px) {
+          .mi-footer { display: none; }
+        }
+
         .mi-dot {
           width: 2px;
           height: 2px;
@@ -183,15 +212,9 @@ export default function MessageInput({ value, onChange, onSend, loading }: Messa
           background: rgba(240,237,230,0.1);
           display: inline-block;
         }
-
-        @media (max-width: 640px) {
-          .mi-inner { padding: 0 16px; }
-          .mi-area { padding: 8px 0 18px; }
-        }
       `}</style>
 
       <div className="mi-area">
-        {/* Trip planner form — has its own dark bg */}
         <TripPlannerForm onSubmit={handleFormSubmit} />
 
         <div className="mi-inner">
