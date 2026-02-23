@@ -3,7 +3,7 @@ from django.conf import settings
 
 HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 
-def generate_ai_response(prompt_text):
+def generate_ai_response(conversation_messages):
 
     url = "https://router.huggingface.co/v1/chat/completions"
 
@@ -13,11 +13,18 @@ def generate_ai_response(prompt_text):
     }
 
     system_prompt = """
-You are a professional travel planner.
+You are a professional AI travel planner.
 
-Respond ONLY in this exact format if days and budget are provided or else based on the question say accordingly in concise sentences. Do not include any additional information or explanations.:
+Always use previous conversation context to understand the destination.
+If the user refers to "there", "that place", or similar words,
+assume it refers to the most recently discussed travel destination.
 
-Destination: 
+RULES:
+
+1. If the user clearly asks for a trip plan and provides duration or budget,
+   respond in the following structured itinerary format:
+
+Destination:
 Duration:
 Estimated Budget:
 
@@ -37,17 +44,34 @@ Activities:
 
 Do not use JSON.
 Do not use markdown.
-Do not use bold.
-If any other question is asked, which you think is not related to travel type things, respond with "I can only help with travel planning." and do not provide any additional information. And if related to travel then reply accordingly in concise sentences.
+Do not use bold formatting.
+
+2. If the user asks a travel-related follow-up question
+   (such as transport, weather, food, safety, best time, costs, routes, etc.),
+   respond naturally in concise helpful sentences.
+   Do NOT use itinerary format unless explicitly requested.
+
+3. If the question is completely unrelated to travel,
+   respond with:
+   "I can only help with travel planning."
+
+Do not ask for duration or budget again if already provided earlier in the conversation.
+Use conversation memory intelligently.
 """
+    # Add system message at top
+    messages = [{"role": "system", "content": system_prompt}] + conversation_messages
+
+    # ✅ ADD DEBUG HERE
+    print("====== FULL MESSAGE PAYLOAD ======")
+    for m in messages:
+        print(m["role"], ":", m["content"][:80])
+    print("===================================")
+
 
     payload = {
         "model": HF_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt_text}
-        ],
-        "max_tokens": 600,
+        "messages": messages,
+        "max_tokens": 1500,
         "temperature": 0.6
     }
 
@@ -55,7 +79,7 @@ If any other question is asked, which you think is not related to travel type th
 
     if response.status_code != 200:
         return {"error": response.text}
+    
 
     data = response.json()
-
     return data["choices"][0]["message"]["content"]

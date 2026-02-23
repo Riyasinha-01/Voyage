@@ -20,7 +20,7 @@ def send_message(request):
     if not message_text:
         return Response({"error": "Message is required"}, status=400)
 
-    # If chat exists
+    # 🔹 Get or create chat
     if chat_id:
         chat = ChatSession.objects(id=chat_id, user=user).first()
         if not chat:
@@ -31,43 +31,44 @@ def send_message(request):
             title=message_text[:30]
         )
         chat.save()
-        
 
-    # Save user message
+    # 🔹 Save user message
     user_msg = Message(
         chat=chat,
         role="user",
         content=message_text
     )
-    print("Before saving user message")
     user_msg.save()
-    print("User message saved successfully")
 
-    # 🔥 Fetch previous conversation for context
+    # 🔥 Fetch full conversation (INCLUDING current message)
     previous_messages = Message.objects(chat=chat).order_by("created_at")
 
     conversation_history = []
 
     for msg in previous_messages:
-        role = "user" if msg.role == "user" else "model"
         conversation_history.append({
-            "role": role,
-            "parts": [msg.content]
+            "role": msg.role,      # must be "user" or "assistant"
+            "content": msg.content # must be "content", not "parts"
         })
 
-    # 🔥 Call Gemini
+    print("====== FULL MESSAGE PAYLOAD ======")
+    for m in conversation_history:
+        print(m["role"], ":", m["content"][:80])
+    print("===================================")
+
+    # 🔥 Call HuggingFace with FULL history
     try:
-        ai_response = generate_ai_response(message_text)
+        ai_response = generate_ai_response(conversation_history)
 
         if isinstance(ai_response, dict) and "error" in ai_response:
             return Response(ai_response, status=500)
 
         ai_response_text = ai_response
-        
+
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-    # Save AI message
+    # 🔹 Save assistant reply
     ai_msg = Message(
         chat=chat,
         role="assistant",
@@ -79,7 +80,6 @@ def send_message(request):
         "chat_id": str(chat.id),
         "reply": ai_response_text
     })
-
 
 @api_view(["GET"])
 def get_chat_history(request, chat_id):
