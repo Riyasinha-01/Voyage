@@ -17,6 +17,8 @@ import os
 load_dotenv()
 
 HF_API_KEY = os.getenv("HF_API_KEY")
+TOMTOM_API_KEY = os.getenv("TOMTOM_API_KEY")
+UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

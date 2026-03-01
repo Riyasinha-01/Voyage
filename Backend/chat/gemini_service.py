@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 
-HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
+HF_MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
 
 def generate_ai_response(conversation_messages):
 
@@ -78,7 +78,7 @@ Use conversation memory intelligently.
     response = requests.post(url, headers=headers, json=payload)
 
     if response.status_code != 200:
-        return {"error": response.text}
+            return data.get("choices", [{}])[0].get("message", {}).get("content", "")
     
 
     data = response.json()

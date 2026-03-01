@@ -1,5 +1,5 @@
 const BASE_URL = "https://voyage-k82c.onrender.com/api";
-
+// const BASE_URL = "http://127.0.0.1:8000/api";
 export const getToken = () => {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
@@ -46,3 +46,19 @@ export async function deleteChat(chatId: string) {
 
   return res.json();
 }
+
+export const fetchNearbyPlaces = async (lat: number, lon: number) => {
+  const res = await fetch(`${BASE_URL}/chat/nearby/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`
+    },
+    body: JSON.stringify({
+      latitude: lat,
+      longitude: lon
+    })
+  });
+
+  return res.json();
+};

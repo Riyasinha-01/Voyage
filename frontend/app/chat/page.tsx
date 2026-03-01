@@ -6,6 +6,7 @@ import { sendMessage, fetchChatHistory } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import ChatWindow from "@/components/ChatWindow";
 import MessageInput from "@/components/MessageInput";
+import Link from "next/link";
 
 interface Message {
   role: "user" | "assistant";
@@ -30,9 +31,8 @@ export default function ChatPage() {
   const [chatId, setChatId] = useState<string | undefined>(undefined);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false); // closed by default; opens on mount for desktop
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // On desktop, open sidebar by default
   useEffect(() => {
     if (!isMobile) setSidebarOpen(true);
   }, [isMobile]);
@@ -59,7 +59,6 @@ export default function ChatPage() {
       setChatId(id);
       setMessages(Array.isArray(data.messages) ? data.messages : []);
     } catch { setMessages([]); }
-    // Auto-close sidebar on mobile after selecting a chat
     if (isMobile) setSidebarOpen(false);
   };
 
@@ -235,16 +234,64 @@ export default function ChatPage() {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          flex: 1;
         }
 
-        .topbar-dot {
-          width: 4px;
-          height: 4px;
-          min-width: 4px;
+        /* ── What's Nearby button — right-aligned ── */
+        .nearby-btn {
+          margin-left: auto;
+          flex-shrink: 0;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 12px;
+          font-weight: 400;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: #c9a96e;
+          text-decoration: none;
+          padding: 6px 14px;
+          border: 1px solid rgba(201,169,110,0.35);
+          border-radius: 5px;
+          background: rgba(201,169,110,0.06);
+          transition: background 0.2s, border-color 0.2s, color 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          white-space: nowrap;
+        }
+
+        .nearby-btn::before {
+          content: '';
+          display: block;
+          width: 5px;
+          height: 5px;
           border-radius: 50%;
           background: #c9a96e;
-          opacity: 0.5;
-          margin-left: auto;
+          opacity: 0.75;
+          flex-shrink: 0;
+        }
+
+        .nearby-btn:hover {
+          background: rgba(201,169,110,0.14);
+          border-color: rgba(201,169,110,0.65);
+          color: #e0c080;
+        }
+
+        /* On very small screens, hide the text and show only the dot + icon feel */
+        @media (max-width: 380px) {
+          .nearby-btn {
+            padding: 6px 10px;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+          }
+
+          .nearby-btn-text {
+            display: none;
+          }
+
+          .nearby-btn::after {
+            content: 'Nearby';
+            font-size: 11px;
+          }
         }
       `}</style>
 
@@ -283,7 +330,10 @@ export default function ChatPage() {
             <span className="topbar-label">
               {messages.length > 0 ? "AI Travel Planner" : "Start a new journey"}
             </span>
-            <div className="topbar-dot" />
+            {/* Nearby button — pushed to far right via margin-left: auto on the element itself */}
+            <Link href="/nearby" className="nearby-btn">
+              <span className="nearby-btn-text">What&apos;s Nearby</span>
+            </Link>
           </div>
 
           <ChatWindow
