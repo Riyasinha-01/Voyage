@@ -62,3 +62,16 @@ export const fetchNearbyPlaces = async (lat: number, lon: number) => {
 
   return res.json();
 };
+
+export async function fetchLocationName(lat: number, lon: number) {
+  const res = await fetch("https://voyage-k82c.onrender.com/api/chat/reverse-geocode/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      latitude: lat,
+      longitude: lon,
+    }),
+  });
+
+  return res.json();
+}

@@ -172,6 +172,35 @@ def get_unsplash_image(query):
     except:
         return None
 
+def get_pexels_image(query):
+    try:
+        url = "https://api.pexels.com/v1/search"
+
+        headers = {
+            "Authorization": settings.PEXELS_API_KEY
+        }
+
+        params = {
+            "query": query,
+            "per_page": 1,
+            "orientation": "landscape"
+        }
+
+        response = requests.get(url, headers=headers, params=params)
+
+        if response.status_code == 200:
+            data = response.json()
+            photos = data.get("photos")
+
+            if photos:
+                return photos[0]["src"]["large"]
+
+        return None
+
+    except Exception as e:
+        print("Pexels error:", e)
+        return None
+    
 def get_place_image(name, category):
     wiki = get_wikipedia_image(name)
     if wiki:
@@ -199,6 +228,12 @@ def nearby_places(request):
     if lat is None or lon is None:
         return Response({"error": "Location required"}, status=400)
 
+    try:
+        lat = float(lat)
+        lon = float(lon)
+    except ValueError:
+        return Response({"error": "Invalid coordinates"}, status=400)
+
     url = "https://api.tomtom.com/search/2/nearbySearch/.json"
 
     params = {
@@ -209,37 +244,61 @@ def nearby_places(request):
         "key": settings.TOMTOM_API_KEY
     }
 
-    response = requests.get(url, params=params)
-    data = response.json()
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+    except Exception as e:
+        return Response({"error": "TomTom API failed"}, status=500)
 
     results = []
 
     for place in data.get("results", [])[:8]:
-        name = place.get("poi", {}).get("name")
+        name = place.get("poi", {}).get("name", "Unknown Place")
         categories = place.get("poi", {}).get("categories", [])
         category = categories[0] if categories else "place"
 
-        # Normalize category for better frontend control
-        if "restaurant" in category.lower() or "indian" in category.lower():
+        # Normalize category
+        category_lower = category.lower()
+
+        if "restaurant" in category_lower or "indian" in category_lower:
             category = "restaurant"
-        elif "park" in category.lower():
+        elif "park" in category_lower:
             category = "park"
-        elif "attraction" in category.lower():
+        elif "attraction" in category_lower:
             category = "tourist attraction"
-        elif "amusement" in category.lower():
+        elif "amusement" in category_lower:
             category = "amusement park"
+        else:
+            category = "place"
+
         latitude = place.get("position", {}).get("lat")
         longitude = place.get("position", {}).get("lon")
+
+        if latitude is None or longitude is None:
+            continue
+
         distance = calculate_distance(lat, lon, latitude, longitude)
 
-        image = get_place_image(name, category)
+        # 🔥 Better Pexels search query
+        # Better search query
+        search_query = f"{name} {category}"
+
+        image = get_pexels_image(search_query)
+
+        # Fallback only if Pexels fails
+        if not image:
+            image = "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg"
+
+        # Fallback if Pexels fails
+        if not image:
+            image = "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg"
 
         results.append({
             "name": name,
             "category": category,
             "latitude": latitude,
             "longitude": longitude,
-            "distance_km": distance,
+            "distance_km": round(distance, 2),
             "image": image
         })
 
@@ -276,4 +335,44 @@ def geocode_location(request):
     return Response({
         "latitude": position["lat"],
         "longitude": position["lon"]
+    })
+
+@api_view(["POST"])
+def reverse_geocode(request):
+    lat = request.data.get("latitude")
+    lon = request.data.get("longitude")
+
+    if lat is None or lon is None:
+        return Response({"error": "Coordinates required"}, status=400)
+
+    url = f"https://api.tomtom.com/search/2/reverseGeocode/{lat},{lon}.json"
+
+    params = {
+        "key": settings.TOMTOM_API_KEY
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+    addresses = data.get("addresses", [])
+
+    if not addresses:
+        return Response({"error": "Location not found"}, status=404)
+
+    address = addresses[0].get("address", {})
+
+    city = (
+        address.get("municipality")
+        or address.get("municipalitySubdivision")
+        or address.get("localName")
+        or address.get("countrySecondarySubdivision")
+    )
+
+    return Response({
+        "city": city,
+        "state": address.get("countrySubdivision"),
+        "country": address.get("country")
     })
